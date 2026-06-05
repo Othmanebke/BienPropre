@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Paintbrush } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { supabase } from '@/services/supabaseClient';
 import type { Product } from '@/types/shop.types';
 import { Button } from '@/components/ui/Button';
@@ -17,11 +17,8 @@ export default function ProductsPage() {
       .select('*')
       .order('created_at', { ascending: true })
       .then(({ data, error: err }) => {
-        if (err) {
-          setError(err.message);
-        } else {
-          setProducts(data ?? []);
-        }
+        if (err) setError(err.message);
+        else     setProducts(data ?? []);
         setLoading(false);
       });
   }, []);
@@ -29,52 +26,74 @@ export default function ProductsPage() {
   if (loading) return <PageLoader />;
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold text-gray-900">Catalogue</h1>
-      <p className="mt-2 text-gray-500">
-        Choisissez votre base, puis personnalisez-la à votre image.
-      </p>
+    <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mb-10">
+        <h1 className="text-4xl font-extrabold text-gray-900">La collection</h1>
+        <p className="mt-2 text-gray-500">
+          {products.length} design{products.length !== 1 ? 's' : ''} disponible
+          {products.length !== 1 ? 's' : ''}
+        </p>
+      </div>
 
       {error && (
-        <p className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-600">{error}</p>
+        <div className="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-600">{error}</div>
       )}
 
-      <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Placeholder quand pas encore de produits en DB */}
+      {products.length === 0 && !error && (
+        <div className="flex flex-col items-center gap-4 py-24 text-center">
+          <ShoppingBag className="w-14 h-14 text-gray-200" />
+          <p className="text-gray-400">
+            La collection arrive bientôt — revenez nous voir !
+          </p>
+        </div>
+      )}
+
+      <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
           <li
             key={product.id}
-            className="group flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+            className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md"
           >
-            <div className="flex items-center justify-center bg-gray-50 p-8 h-52">
+            {/* Product image */}
+            <Link to={`/products/${product.id}`} className="block overflow-hidden bg-gray-50">
               {product.image_url ? (
                 <img
                   src={product.image_url}
                   alt={product.name}
-                  className="h-full w-full object-contain"
+                  className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               ) : (
-                <div className="h-28 w-28 rounded-xl bg-gray-200" />
+                /* Colour swatch placeholder tant qu'il n'y a pas de photo */
+                <div
+                  className="flex h-64 w-full items-center justify-center"
+                  style={{ backgroundColor: product.color }}
+                >
+                  <span className="rounded-full bg-black/10 px-3 py-1 text-xs text-white/80 backdrop-blur-sm">
+                    Photo à venir
+                  </span>
+                </div>
               )}
-            </div>
+            </Link>
 
+            {/* Info */}
             <div className="flex flex-1 flex-col gap-3 p-5">
-              <h2 className="font-semibold text-gray-900">{product.name}</h2>
-              <p className="text-sm text-gray-500 flex-1">{product.description}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-xl font-bold text-gray-900">
-                  {product.base_price.toFixed(2)} €
+              <div className="flex items-start justify-between gap-2">
+                <h2 className="font-semibold text-gray-900 leading-snug">{product.name}</h2>
+                <span className="shrink-0 text-lg font-bold text-gray-900">
+                  {product.base_price.toFixed(2)}&nbsp;€
                 </span>
-                {product.is_customizable && (
-                  <Link to={`/customize/${product.id}`}>
-                    <Button
-                      size="sm"
-                      leftIcon={<Paintbrush className="w-4 h-4" />}
-                    >
-                      Personnaliser
-                    </Button>
-                  </Link>
-                )}
               </div>
+
+              {product.description && (
+                <p className="text-sm text-gray-500 line-clamp-2">{product.description}</p>
+              )}
+
+              <Link to={`/products/${product.id}`} className="mt-auto">
+                <Button className="w-full" size="sm">
+                  Choisir ma taille
+                </Button>
+              </Link>
             </div>
           </li>
         ))}

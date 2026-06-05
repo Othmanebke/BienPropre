@@ -2,19 +2,11 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { CartItem, TShirtSize } from '@/types/shop.types';
 
-// ------------------------------------
-// State shape
-// ------------------------------------
 interface CartState {
   items: CartItem[];
-  readonly totalPrice: number;
-  readonly totalItems: number;
   isOpen: boolean;
 }
 
-// ------------------------------------
-// Actions shape
-// ------------------------------------
 interface CartActions {
   addItem: (item: CartItem) => void;
   removeItem: (cartItemId: string) => void;
@@ -25,21 +17,20 @@ interface CartActions {
   closeCart: () => void;
 }
 
-// ------------------------------------
-// Helpers
-// ------------------------------------
+interface CartComputed {
+  readonly totalPrice: number;
+  readonly totalItems: number;
+}
+
 function computeTotal(items: CartItem[]): number {
   return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 }
 
-function computeTotalItems(items: CartItem[]): number {
+function computeItems(items: CartItem[]): number {
   return items.reduce((sum, item) => sum + item.quantity, 0);
 }
 
-// ------------------------------------
-// Store
-// ------------------------------------
-export const useCartStore = create<CartState & CartActions>()(
+export const useCartStore = create<CartState & CartActions & CartComputed>()(
   devtools(
     persist(
       (set, get) => ({
@@ -51,17 +42,13 @@ export const useCartStore = create<CartState & CartActions>()(
         },
 
         get totalItems() {
-          return computeTotalItems(get().items);
+          return computeItems(get().items);
         },
 
-        addItem: (item: CartItem) => {
+        addItem: (item) => {
+          // Merge identical lines (same product + same size)
           const existing = get().items.find(
-            (i) =>
-              i.product.id === item.product.id &&
-              i.size === item.size &&
-              i.color === item.color &&
-              i.customText === item.customText &&
-              i.customImageUrl === item.customImageUrl,
+            (i) => i.product.id === item.product.id && i.size === item.size,
           );
 
           if (existing) {
@@ -87,9 +74,7 @@ export const useCartStore = create<CartState & CartActions>()(
 
         removeItem: (cartItemId) =>
           set(
-            (state) => ({
-              items: state.items.filter((i) => i.cartItemId !== cartItemId),
-            }),
+            (state) => ({ items: state.items.filter((i) => i.cartItemId !== cartItemId) }),
             false,
             'removeItem',
           ),
@@ -123,13 +108,11 @@ export const useCartStore = create<CartState & CartActions>()(
 
         clearCart: () => set({ items: [] }, false, 'clearCart'),
 
-        openCart: () => set({ isOpen: true }, false, 'openCart'),
-
+        openCart:  () => set({ isOpen: true },  false, 'openCart'),
         closeCart: () => set({ isOpen: false }, false, 'closeCart'),
       }),
       {
         name: 'bienpropre-cart',
-        // Only persist the items array, not isOpen
         partialize: (state) => ({ items: state.items }),
       },
     ),

@@ -1,7 +1,3 @@
-// Auto-generated types mirroring the Supabase PostgreSQL schema.
-// Re-run `supabase gen types typescript --linked > src/types/database.types.ts`
-// after every migration to keep this file in sync.
-
 export type OrderStatus = 'pending' | 'paid' | 'failed' | 'shipped';
 
 export interface Database {
@@ -41,6 +37,7 @@ export interface Database {
           base_price: number;
           is_customizable: boolean;
           image_url: string | null;
+          color: string;
           created_at: string;
         };
         Insert: {
@@ -50,6 +47,7 @@ export interface Database {
           base_price: number;
           is_customizable?: boolean;
           image_url?: string | null;
+          color?: string;
           created_at?: string;
         };
         Update: {
@@ -58,6 +56,7 @@ export interface Database {
           base_price?: number;
           is_customizable?: boolean;
           image_url?: string | null;
+          color?: string;
         };
       };
 
